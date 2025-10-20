@@ -27,7 +27,7 @@ export default class ResourceLoader {
 
 	loadDefaultAssets() {
 		// Use absolute path from server root to match how assets are served
-		this.noiseTexture = this.textureLoader.load("../assets/textures/noise.png");
+		this.noiseTexture = this.textureLoader.load("/src/assets/textures/noise.png");
 		this.noiseTexture.wrapS = this.noiseTexture.wrapT = THREE.RepeatWrapping;
 	}
 
