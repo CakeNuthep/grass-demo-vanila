@@ -11,9 +11,9 @@ export default class World {
 		this.game = new Game();
 		this.scene = this.game.scene;
 		this.assets = {
-			level: "/src/assets/models/level.glb",
-			heightMap: "/src/assets/textures/heightMap.png",
-			grassTexture: "/src/assets/textures/grass.jpg",
+			level: "../assets/models/level.glb",
+			heightMap: "../assets/textures/heightMap.png",
+			grassTexture: "../assets/textures/grass.jpg",
 		};
 
 		this.updatables = [];
