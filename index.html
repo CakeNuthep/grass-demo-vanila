@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>three.js example</title>
+    <style>
+      body {
+        margin: 0px;
+      }
+
+      #game-canvas {
+          display: block;
+          width: 100vw;
+          height: 100vh;
+      }
+
+      .loading-screen {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: #000;
+          color: #fff;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          transition: opacity 1s ease-out;
+          z-index: 100;
+      }
+
+      #my-lil-gui {
+        z-index: 98; 
+      }
+
+      .fade-out {
+          opacity: 0;
+          pointer-events: none;  /* Disables interaction with the hidden menu */
+      }
+
+      .loading-text {
+          font-size: 2rem;
+          margin-bottom: 20px;
+      }
+
+      .progress-bar-container {
+          width: 300px;
+          height: 10px;
+          background-color: #555;
+          border-radius: 5px;
+          overflow: hidden;
+      }
+
+      .progress-bar {
+          height: 100%;
+          width: 0%;
+          background-color: #fff;
+          transition: width 0.1s linear;
+      }
+
+      .hidden {
+          display: none;
+      }
+
+      #fullscreen-button {
+        position: absolute;
+        top:  15px;
+        right:  15px;
+        background: rgba(0,0,0,0.05);
+        border:  0;
+        width:  50px;
+        height:  50px;
+        border-radius: 50%;
+        box-sizing: border-box;
+        transition:  transform .3s;
+        cursor:  pointer;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      #fullscreen-button:hover {
+        transform: scale(1.125);
+      }
+
+
+      #fullscreen-button svg:nth-child(2) { 
+          display: none;
+      }
+
+      [fullscreen] #fullscreen-button svg:nth-child(1) {
+          display: none;
+      }
+
+      [fullscreen] #fullscreen-button svg:nth-child(2) {
+          display: inline-block;
+      }
+
+      #label-container {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          pointer-events: none; /* Allow clicks to pass through to the canvas */
+          display: flex;
+          flex-wrap: wrap;
+          align-items: flex-start;
+          justify-content: flex-start;
+        }
+        .link-label {
+          position: absolute;
+          color: white;
+          background: rgba(0, 0, 0, 0.5);
+          padding: 0.5em 1em;
+          border-radius: 0.5em;
+          cursor: pointer;
+          pointer-events: auto; /* Re-enable pointer events for the label */
+          box-sizing: border-box;
+          word-break: break-word;
+          transition: background 0.2s, font-size 0.2s;
+        }
+
+
+        .hold-container {
+          position: relative;
+          width: 6vw;
+          height: 6vw;
+        }
+
+        #hold-button {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          border: 4px solid #ddd;
+          background-color: #ffffffc2;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1vw;
+          font-weight: bold;
+          color: #555;
+          transition: border-color 0.2s;
+          overflow: hidden;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+          /* Disable text selection */
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          user-select: none;
+        }
+
+        #hold-button:active {
+          border-color: #007bff;
+        }
+
+        .progress-circle {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          background: conic-gradient(#007bff 0%, transparent 0%);
+          transition: background 0.1s;
+        }
+
+        .button-text {
+          position: relative;
+          z-index: 1;
+        }
+
+        /* Completion state */
+        #hold-button.completed {
+          border-color: #28a745;
+          color: #fff;
+          background-color: #28a745;
+          transition: all 0.5s ease-in-out;
+        }
+
+        #hold-button.completed .progress-circle {
+          background: conic-gradient(#28a745 100%, transparent 0%);
+        }
+
+
+        .menu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-family: sans-serif;
+            text-align: center;
+            z-index: 99; /* Ensures the menu is on top of the canvas */
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        #start-button {
+            padding: 1rem 2rem;     
+            font-size: 1.5rem;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        #orientation-message {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-family: sans-serif;
+            text-align: center;
+            z-index: 100; /* Ensures the menu is on top of the canvas */
+            transition: opacity 0.9s ease-in-out;
+        }
+    </style>
+  </head>
+  <body>
+
+    <div id="orientation-message" style="display: none;">
+        <h1>Please rotate your device to horizontal for the best experience.</h1>
+    </div>
+    <div id="start-menu" class="menu" style="display: none;">
+        <h1>Grass Demo</h1>
+        <button id="start-button">Start</button>
+    </div>
+
+    <canvas id="game-canvas"></canvas>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.180.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.180.0/examples/jsm/",
+          "lil-gui": "https://cdn.skypack.dev/lil-gui",
+		      "three-mesh-bvh": "https://cdn.jsdelivr.net/npm/three-mesh-bvh@0.9.1/+esm",
+          "postprocessing": "https://cdn.jsdelivr.net/npm/postprocessing@6.37.3/build/index.js",
+          "tweakpane": "https://cdn.jsdelivr.net/npm/tweakpane@4.0.5/dist/tweakpane.min.js",
+          "mitt": "https://unpkg.com/mitt/dist/mitt.umd.js",
+          "tween": "https://cdnjs.cloudflare.com/ajax/libs/tween.js/25.0.0/tween.umd.min.js",
+          "tone": "https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.53/Tone.js"
+        }
+      }
+    </script>
+    <script type="module" src="/src/main.js"></script>
+    <script>
+
+	    if (document.fullscreenEnabled) {
+
+	        const fullscreen_button = document.createElement("button");
+	        fullscreen_button.setAttribute('id','fullscreen-button');
+	        fullscreen_button.addEventListener("click", toggle_fullscreen);
+
+	        fullscreen_button.innerHTML  = `
+	            <svg viewBox="0 0 24 24">
+                    <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+                </svg>
+                <svg viewBox="0 0 24 24">
+                    <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>
+                </svg>
+	        `;
+
+	        document.body.appendChild(fullscreen_button);
+	    }
+
+
+	    function toggle_fullscreen() {
+
+	    	if (!document.fullscreenElement) {
+
+		        document.body.requestFullscreen();
+		        document.body.setAttribute("fullscreen",""); 
+
+		    } else {
+
+		        document.exitFullscreen();
+		        document.body.removeAttribute("fullscreen"); 
+
+		    }
+		}
+
+	</script>
+  </body>
+</html>
